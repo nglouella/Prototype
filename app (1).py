@@ -34,12 +34,6 @@ theme_css = """
         box-shadow: 0px 2px 8px rgba(0,0,0,0.05);
         text-align: center;
     }
-    .step-title {
-        font-size: 1.2em;
-        font-weight: bold;
-        color: #117A65;
-        margin-top: 20px;
-    }
 </style>
 """
 st.markdown(theme_css, unsafe_allow_html=True)
@@ -78,18 +72,22 @@ def fill_missing(df, method="N/A"):
     return df_copy
 
 # ---------------------------
+# Reset state when a new file is uploaded
+# ---------------------------
+def reset_cleaning_options():
+    st.session_state["do_duplicates"] = False
+    st.session_state["do_standardize_cols"] = False
+    st.session_state["do_normalize_text"] = False
+    st.session_state["do_fix_dates"] = False
+    st.session_state["do_validate_emails"] = False
+    st.session_state["fill_method"] = "N/A"
+    st.session_state["cleaned_ready"] = False
+
+# ---------------------------
 # Hero Section
 # ---------------------------
 st.markdown("<div class='main-title'>🧹 Raw to Ready ✨</div>", unsafe_allow_html=True)
 st.markdown("<div class='subtitle'>Upload your messy CSV, clean it in a few clicks, and download a ready-to-use dataset </div>", unsafe_allow_html=True)
-
-# ---------------------------
-# Session state reset setup
-# ---------------------------
-if "uploaded_file" not in st.session_state:
-    st.session_state.uploaded_file = None
-if "reset_options" not in st.session_state:
-    st.session_state.reset_options = True  # start fresh
 
 # ---------------------------
 # Sidebar
@@ -98,8 +96,19 @@ st.sidebar.title("Data Cleaning Wizard")
 st.sidebar.markdown("Follow the steps below:")
 
 # Step 1: Upload
-uploaded_file = st.sidebar.file_uploader("📥 Step 1: Upload CSV", type=["csv"], key="uploaded_file")
+uploaded_file = st.sidebar.file_uploader("📥 Step 1: Upload CSV", type=["csv"])
 
+# Reset cleaning options if a new file is uploaded
+if uploaded_file is not None and "last_uploaded" not in st.session_state:
+    st.session_state["last_uploaded"] = uploaded_file.name
+    reset_cleaning_options()
+elif uploaded_file is not None and uploaded_file.name != st.session_state.get("last_uploaded"):
+    st.session_state["last_uploaded"] = uploaded_file.name
+    reset_cleaning_options()
+
+# ---------------------------
+# If file uploaded
+# ---------------------------
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
 
@@ -110,21 +119,21 @@ if uploaded_file:
 
     # Step 2: Options
     st.sidebar.markdown("### ⚙️ Step 2: Choose Cleaning Options")
-    fill_method = st.sidebar.selectbox("Missing Values", ["N/A", "Mean", "Median", "Most Frequent"],
-                                       index=0 if st.session_state.reset_options else None)
-    with st.sidebar.expander("Advanced Options"):
-        do_duplicates = st.checkbox("Remove duplicates", value=False if st.session_state.reset_options else None)
-        do_standardize_cols = st.checkbox("Standardize column names", value=False if st.session_state.reset_options else None)
-        do_normalize_text = st.checkbox("Normalize text (names, cities)", value=False if st.session_state.reset_options else None)
-        do_fix_dates = st.checkbox("Fix date formats", value=False if st.session_state.reset_options else None)
-        do_validate_emails = st.checkbox("Validate emails", value=False if st.session_state.reset_options else None)
+    fill_method = st.sidebar.selectbox(
+        "Missing Values",
+        ["N/A", "Mean", "Median", "Most Frequent"],
+        key="fill_method"
+    )
 
-    # After showing options once, reset flag to False
-    st.session_state.reset_options = False
+    with st.sidebar.expander("Advanced Options"):
+        st.checkbox("Remove duplicates", key="do_duplicates")
+        st.checkbox("Standardize column names", key="do_standardize_cols")
+        st.checkbox("Normalize text (names, cities)", key="do_normalize_text")
+        st.checkbox("Fix date formats", key="do_fix_dates")
+        st.checkbox("Validate emails", key="do_validate_emails")
 
     # Tabs for Raw vs Cleaned data
     tab1, tab2 = st.tabs(["🧹 Raw Data Preview", "✨ Cleaned Data Preview"])
-
     with tab1:
         st.dataframe(df.head())
 
@@ -134,18 +143,18 @@ if uploaded_file:
 
         # Apply cleaning
         df_cleaned = fill_missing(df_cleaned, method=fill_method)
-        if do_duplicates:
+        if st.session_state["do_duplicates"]:
             df_cleaned.drop_duplicates(inplace=True)
-        if do_standardize_cols:
+        if st.session_state["do_standardize_cols"]:
             df_cleaned.columns = [c.strip().lower().replace(" ", "_") for c in df_cleaned.columns]
-        if do_normalize_text:
+        if st.session_state["do_normalize_text"]:
             for col in df_cleaned.select_dtypes(include=["object"]).columns:
                 df_cleaned[col] = normalize_text(df_cleaned[col])
-        if do_fix_dates:
+        if st.session_state["do_fix_dates"]:
             for col in df_cleaned.columns:
                 if "date" in col.lower():
                     df_cleaned[col] = standardize_dates(df_cleaned[col])
-        if do_validate_emails:
+        if st.session_state["do_validate_emails"]:
             for col in df_cleaned.columns:
                 if "email" in col.lower():
                     df_cleaned[col] = validate_emails(df_cleaned[col])
@@ -169,18 +178,10 @@ if uploaded_file:
         with tab2:
             st.dataframe(df_cleaned.head())
 
-        # Step 4: Download or Restart
+        # Step 4: Download
         st.subheader("📥 Step 4: Save")
         csv = df_cleaned.to_csv(index=False).encode("utf-8")
-        colA, colB = st.columns(2)
-        with colA:
-            st.download_button("⬇️ Download Cleaned CSV", csv, "cleaned_data.csv", "text/csv")
-        with colB:
-            if st.button("🔄 Upload New File"):
-                # Reset everything
-                st.session_state.uploaded_file = None
-                st.session_state.reset_options = True
-                st.experimental_rerun()
+        st.download_button("⬇️ Download Cleaned CSV", csv, "cleaned_data.csv", "text/csv")
 
 else:
     st.info(" Upload a CSV file in the sidebar to get started!")
