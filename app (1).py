@@ -51,10 +51,9 @@ uploaded_file = st.sidebar.file_uploader("📥 Upload CSV", type=["csv"])
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
 
-    # Save original stats
-    rows_before = len(df)
-    nulls_before = df.isnull().sum().sum()
-    duplicates_before = df.duplicated().sum()
+    rows_before = int(len(df))
+    nulls_before = int(df.isnull().sum().sum())
+    duplicates_before = int(df.duplicated().sum())
 
     st.title("📊 Raw to Ready Data Cleaner")
     st.markdown("Make your dataset clean, consistent, and ready for analysis 🚀")
@@ -104,10 +103,10 @@ if uploaded_file:
                 if "email" in col.lower():
                     df_cleaned[col] = validate_emails(df_cleaned[col])
 
-        # Save cleaned stats
-        rows_after = len(df_cleaned)
-        nulls_after = df_cleaned.isnull().sum().sum()
-        duplicates_after = df_cleaned.duplicated().sum()
+        # Save cleaned stats (also cast to int)
+        rows_after = int(len(df_cleaned))
+        nulls_after = int(df_cleaned.isnull().sum().sum())
+        duplicates_after = int(df_cleaned.duplicated().sum())
 
         st.success("✅ Cleaning completed!")
 
@@ -115,9 +114,9 @@ if uploaded_file:
         st.subheader("📑 Data Cleaning Report")
 
         col1, col2, col3 = st.columns(3)
-        col1.metric("Rows", rows_before, rows_after - rows_before)
-        col2.metric("Nulls Fixed", nulls_before, nulls_after - nulls_before)
-        col3.metric("Duplicates Removed", duplicates_before - duplicates_after)
+        col1.metric("Rows", rows_after, rows_after - rows_before)
+        col2.metric("Nulls", nulls_after, nulls_before - nulls_after)  # fixed direction
+        col3.metric("Duplicates", duplicates_after, duplicates_before - duplicates_after)
 
         st.write("### 🔍 Before vs After Summary")
         report_df = pd.DataFrame({
