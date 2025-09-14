@@ -140,40 +140,40 @@ if uploaded_file:
         st.dataframe(df.head())
 
    # Step 3: Run Cleaning
-if st.sidebar.button("🧹 Step 3: Run Cleaning"):
-    df_cleaned = df.copy()
+    if st.sidebar.button("🧹 Step 3: Run Cleaning"):
+        df_cleaned = df.copy()
 
-    # Progress bar
-    progress = st.progress(0)
+        # Progress bar
+        progress = st.progress(0)
 
-    # Simulate cleaning steps with progress
-    progress.progress(10)
-    df_cleaned = fill_missing(df_cleaned, method=fill_method)
+        # Simulate cleaning steps with progress
+        progress.progress(10)
+        df_cleaned = fill_missing(df_cleaned, method=fill_method)
 
-    progress.progress(30)
-    if st.session_state["do_duplicates"]:
-        df_cleaned.drop_duplicates(inplace=True)
+        progress.progress(30)
+        if st.session_state["do_duplicates"]:
+            df_cleaned.drop_duplicates(inplace=True)
 
-    progress.progress(50)
-    if st.session_state["do_standardize_cols"]:
-        df_cleaned.columns = [c.strip().lower().replace(" ", "_") for c in df_cleaned.columns]
+        progress.progress(50)
+        if st.session_state["do_standardize_cols"]:
+            df_cleaned.columns = [c.strip().lower().replace(" ", "_") for c in df_cleaned.columns]
 
-    progress.progress(70)
-    if st.session_state["do_normalize_text"]:
-        for col in df_cleaned.select_dtypes(include=["object"]).columns:
-            df_cleaned[col] = normalize_text(df_cleaned[col])
+        progress.progress(70)
+        if st.session_state["do_normalize_text"]:
+            for col in df_cleaned.select_dtypes(include=["object"]).columns:
+                df_cleaned[col] = normalize_text(df_cleaned[col])
 
-    progress.progress(85)
-    if st.session_state["do_fix_dates"]:
-        for col in df_cleaned.columns:
-            if "date" in col.lower():
-                df_cleaned[col] = standardize_dates(df_cleaned[col])
-    if st.session_state["do_validate_emails"]:
-        for col in df_cleaned.columns:
-            if "email" in col.lower():
-                df_cleaned[col] = validate_emails(df_cleaned[col])
+        progress.progress(85)
+        if st.session_state["do_fix_dates"]:
+            for col in df_cleaned.columns:
+                if "date" in col.lower():
+                    df_cleaned[col] = standardize_dates(df_cleaned[col])
+        if st.session_state["do_validate_emails"]:
+            for col in df_cleaned.columns:
+                if "email" in col.lower():
+                    df_cleaned[col] = validate_emails(df_cleaned[col])
 
-    progress.progress(100)
+        progress.progress(100)
 
 
         # Save cleaned stats
@@ -202,5 +202,6 @@ if st.sidebar.button("🧹 Step 3: Run Cleaning"):
 
 else:
     st.info(" Upload a CSV file in the sidebar to get started!")
+
 
 
