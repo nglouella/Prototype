@@ -7,31 +7,42 @@ import re
 st.set_page_config(page_title="Raw to Ready ✨", page_icon="🧹", layout="wide")
 
 # ---------------------------
-# Custom CSS for style
+# Custom CSS for Theme
 # ---------------------------
-st.markdown("""
-    <style>
-        .main-title {
-            text-align: center;
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #2E86C1;
-        }
-        .subtitle {
-            text-align: center;
-            font-size: 1.2em;
-            color: #555;
-            margin-bottom: 30px;
-        }
-        .report-card {
-            padding: 20px;
-            border-radius: 15px;
-            background-color: #f8f9fa;
-            box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-    </style>
-""", unsafe_allow_html=True)
+theme_css = """
+<style>
+    body {
+        background-color: #F4F6F6;
+    }
+    .main-title {
+        text-align: center;
+        font-size: 2.5em;
+        font-weight: bold;
+        color: #2E86C1;
+    }
+    .subtitle {
+        text-align: center;
+        font-size: 1.2em;
+        color: #555;
+        margin-bottom: 30px;
+    }
+    .report-card {
+        padding: 20px;
+        border-radius: 15px;
+        background-color: #ffffff;
+        border-left: 6px solid #2E86C1;
+        box-shadow: 0px 2px 8px rgba(0,0,0,0.05);
+        text-align: center;
+    }
+    .step-title {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #117A65;
+        margin-top: 20px;
+    }
+</style>
+"""
+st.markdown(theme_css, unsafe_allow_html=True)
 
 # ---------------------------
 # Helper functions
@@ -75,7 +86,7 @@ st.markdown("<div class='subtitle'>Upload your messy CSV, clean it in a few clic
 # ---------------------------
 # Sidebar
 # ---------------------------
-st.sidebar.title("⚙️ Cleaning Pipeline")
+st.sidebar.title("📋 Data Cleaning Wizard")
 st.sidebar.markdown("Follow the steps below:")
 
 # Step 1: Upload
@@ -90,13 +101,14 @@ if uploaded_file:
     duplicates_before = int(df.duplicated().sum())
 
     # Step 2: Options
-    st.sidebar.subheader("⚙️ Step 2: Choose Cleaning Options")
+    st.sidebar.markdown("### ⚙️ Step 2: Choose Cleaning Options")
     fill_method = st.sidebar.selectbox("Missing Values", ["N/A", "Mean", "Median", "Most Frequent"])
-    do_duplicates = st.sidebar.checkbox("Remove duplicates")
-    do_standardize_cols = st.sidebar.checkbox("Standardize column names")
-    do_normalize_text = st.sidebar.checkbox("Normalize text (names, cities)")
-    do_fix_dates = st.sidebar.checkbox("Fix date formats")
-    do_validate_emails = st.sidebar.checkbox("Validate emails")
+    with st.sidebar.expander("🔧 Advanced Options"):
+        do_duplicates = st.checkbox("Remove duplicates")
+        do_standardize_cols = st.checkbox("Standardize column names")
+        do_normalize_text = st.checkbox("Normalize text (names, cities)")
+        do_fix_dates = st.checkbox("Fix date formats")
+        do_validate_emails = st.checkbox("Validate emails")
 
     # Tabs for Raw vs Cleaned data
     tab1, tab2 = st.tabs(["📂 Raw Data Preview", "✨ Cleaned Data Preview"])
@@ -132,7 +144,7 @@ if uploaded_file:
         duplicates_after = int(df_cleaned.duplicated().sum())
 
         # Report
-        st.success("✅ Cleaning completed!")
+        st.success("🎉 Cleaning completed successfully!")
 
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -145,10 +157,15 @@ if uploaded_file:
         with tab2:
             st.dataframe(df_cleaned.head())
 
-        # Download button
-        st.subheader("📥 Download")
+        # Step 4: Download or Restart
+        st.subheader("📥 Step 4: Save or Restart")
         csv = df_cleaned.to_csv(index=False).encode("utf-8")
-        st.download_button("⬇️ Download Cleaned CSV", csv, "cleaned_data.csv", "text/csv")
+        colA, colB = st.columns(2)
+        with colA:
+            st.download_button("⬇️ Download Cleaned CSV", csv, "cleaned_data.csv", "text/csv")
+        with colB:
+            if st.button("🔄 Upload Another File"):
+                st.experimental_rerun()
 
 else:
     st.info("👆 Upload a CSV file in the sidebar to get started!")
