@@ -4,43 +4,7 @@ import numpy as np
 from datetime import datetime
 import re
 
-# ---------------------------
-# Page Config & Styling
-# ---------------------------
 st.set_page_config(page_title="Raw to Ready ✨", page_icon="🧹", layout="wide")
-
-st.markdown(
-    """
-    <style>
-    .main {background-color: #f9f9f9;}
-    .block-container {padding-top: 2rem; padding-bottom: 2rem;}
-    h1, h2, h3, h4 {color: #2c3e50;}
-    .stButton>button {
-        background-color: #3498db;
-        color: white;
-        border-radius: 10px;
-        padding: 0.6rem 1.2rem;
-        font-weight: 600;
-    }
-    .stButton>button:hover {
-        background-color: #2980b9;
-        color: white;
-    }
-    .stDownloadButton>button {
-        background-color: #27ae60;
-        color: white;
-        border-radius: 10px;
-        padding: 0.6rem 1.2rem;
-        font-weight: 600;
-    }
-    .stDownloadButton>button:hover {
-        background-color: #1e8449;
-        color: white;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
 
 # ---------------------------
 # Helper functions
@@ -76,28 +40,62 @@ def fill_missing(df, method="N/A"):
     return df_copy
 
 # ---------------------------
+# Styling
+# ---------------------------
+st.markdown(
+    """
+    <style>
+    body {
+        background-color: #f4f6f9;
+    }
+    .main {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 12px;
+    }
+    .stButton>button {
+        background-color: #4CAF50;
+        color: white;
+        border-radius: 8px;
+        padding: 0.6em 1.2em;
+        border: none;
+        font-weight: bold;
+    }
+    .stButton>button:hover {
+        background-color: #45a049;
+    }
+    .css-1d391kg, .css-1v3fvcr {
+        background-color: #2C3E50 !important;
+        color: white !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# ---------------------------
 # Sidebar (steps)
 # ---------------------------
 st.sidebar.title("🧹 Cleaning Pipeline")
 st.sidebar.markdown("Follow the steps below:")
 
-# File uploader with session reset
-uploaded_file = st.sidebar.file_uploader("📥 Upload CSV", type=["csv"], key="file_uploader")
+# Initialize session state for reset
+if "last_uploaded" not in st.session_state:
+    st.session_state.last_uploaded = None
+if "options_reset" not in st.session_state:
+    st.session_state.options_reset = False
+
+# Step 1: File upload
+uploaded_file = st.sidebar.file_uploader("📥 Upload CSV", type=["csv"])
+
+# Reset options if a new file is uploaded
+if uploaded_file is not None and uploaded_file != st.session_state.last_uploaded:
+    st.session_state.last_uploaded = uploaded_file
+    st.session_state.options_reset = True
+else:
+    st.session_state.options_reset = False
 
 if uploaded_file:
-    if "last_uploaded" not in st.session_state:
-        st.session_state.last_uploaded = uploaded_file.name
-
-    # Reset options if a new file is uploaded
-    if uploaded_file.name != st.session_state.last_uploaded:
-        for key in [
-            "fill_method", "do_duplicates", "do_standardize_cols",
-            "do_normalize_text", "do_fix_dates", "do_validate_emails"
-        ]:
-            if key in st.session_state:
-                del st.session_state[key]
-        st.session_state.last_uploaded = uploaded_file.name
-
     df = pd.read_csv(uploaded_file)
 
     # Save original stats
@@ -110,16 +108,18 @@ if uploaded_file:
 
     # Step 2: Choose options
     st.sidebar.subheader("⚙️ Options")
+
+    # Reset cleaning options if new file uploaded
     fill_method = st.sidebar.selectbox(
         "Missing Values",
         ["N/A", "Mean", "Median", "Most Frequent"],
-        key="fill_method"
+        index=0 if st.session_state.options_reset else None
     )
-    do_duplicates = st.sidebar.checkbox("Remove duplicates", key="do_duplicates")
-    do_standardize_cols = st.sidebar.checkbox("Standardize column names", key="do_standardize_cols")
-    do_normalize_text = st.sidebar.checkbox("Normalize text (names, cities)", key="do_normalize_text")
-    do_fix_dates = st.sidebar.checkbox("Fix date formats", key="do_fix_dates")
-    do_validate_emails = st.sidebar.checkbox("Validate emails", key="do_validate_emails")
+    do_duplicates = st.sidebar.checkbox("Remove duplicates", value=False if st.session_state.options_reset else None)
+    do_standardize_cols = st.sidebar.checkbox("Standardize column names", value=False if st.session_state.options_reset else None)
+    do_normalize_text = st.sidebar.checkbox("Normalize text (names, cities)", value=False if st.session_state.options_reset else None)
+    do_fix_dates = st.sidebar.checkbox("Fix date formats", value=False if st.session_state.options_reset else None)
+    do_validate_emails = st.sidebar.checkbox("Validate emails", value=False if st.session_state.options_reset else None)
 
     # Step 3: Preview raw data
     st.subheader("📂 Raw Data Preview")
@@ -168,9 +168,9 @@ if uploaded_file:
         st.subheader("📑 Data Cleaning Report")
 
         col1, col2, col3 = st.columns(3)
-        col1.metric("Rows", rows_after, rows_after - rows_before)
-        col2.metric("Nulls Fixed", nulls_before - nulls_after)
-        col3.metric("Duplicates Removed", duplicates_before - duplicates_after)
+        col1.metric("Rows", rows_before, rows_after - rows_before)
+        col2.metric("Nulls Fixed", nulls_before, f"{nulls_before - nulls_after}")
+        col3.metric("Duplicates Removed", f"{duplicates_before - duplicates_after}")
 
         st.write("### 🔍 Before vs After Summary")
         report_df = pd.DataFrame({
