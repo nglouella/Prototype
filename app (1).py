@@ -4,49 +4,34 @@ import numpy as np
 from datetime import datetime
 import re
 
+# ---------------------------
+# Page config + CSS styling
+# ---------------------------
 st.set_page_config(page_title="Raw to Ready ✨", page_icon="🧹", layout="wide")
 
-# ---------------------------
-# Custom CSS for theming
-# ---------------------------
-st.markdown(
-    """
+# Custom CSS for background + colors
+st.markdown("""
     <style>
-    /* Background */
     .stApp {
-        background: linear-gradient(135deg, #fdfbfb, #ebedee);
-        color: #333333;
-        font-family: "Segoe UI", sans-serif;
+        background-color: #f9f9fc; /* light pastel background */
     }
-    /* Sidebar */
-    section[data-testid="stSidebar"] {
-        background-color: #1f2937; 
-        color: white;
+    .main-title {
+        color: #2c3e50;
+        text-align: center;
+        font-size: 36px;
+        font-weight: bold;
     }
-    section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3 {
-        color: #f9fafb !important;
+    .sub-title {
+        color: #16a085;
+        text-align: center;
+        font-size: 20px;
     }
-    /* Buttons */
-    div.stButton > button {
-        background: linear-gradient(90deg, #6366f1, #3b82f6);
-        color: white;
-        border-radius: 8px;
-        padding: 0.6em 1em;
-        border: none;
-    }
-    div.stButton > button:hover {
-        background: linear-gradient(90deg, #4f46e5, #2563eb);
-    }
-    /* Tables */
-    .stDataFrame, .stTable {
-        background: white;
-        border-radius: 8px;
-        padding: 8px;
+    .stSidebar {
+        background-color: #ecf0f1;
     }
     </style>
-    """,
-    unsafe_allow_html=True
-)
+""", unsafe_allow_html=True)
+
 
 # ---------------------------
 # Helper functions
@@ -65,7 +50,7 @@ def normalize_text(series):
     return series.astype(str).str.strip().str.lower().str.title()
 
 def validate_emails(series):
-    return series.apply(lambda x: x if re.match(r"[^@]+@[^@]+\\.[^@]+", str(x)) else "invalid@example.com")
+    return series.apply(lambda x: x if re.match(r"[^@]+@[^@]+\.[^@]+", str(x)) else "invalid@example.com")
 
 def fill_missing(df, method="N/A"):
     df_copy = df.copy()
@@ -81,8 +66,9 @@ def fill_missing(df, method="N/A"):
                 df_copy[col].fillna(df_copy[col].mode()[0], inplace=True)
     return df_copy
 
+
 # ---------------------------
-# Sidebar
+# Sidebar (steps)
 # ---------------------------
 st.sidebar.title("🧹 Cleaning Pipeline")
 st.sidebar.markdown("Follow the steps below:")
@@ -98,8 +84,8 @@ if uploaded_file:
     nulls_before = df.isnull().sum().sum()
     duplicates_before = df.duplicated().sum()
 
-    st.title("📊 Raw to Ready Data Cleaner")
-    st.markdown("Make your dataset clean, consistent, and ready for analysis 🚀")
+    st.markdown('<div class="main-title">📊 Raw to Ready Data Cleaner</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-title">Make your dataset clean, consistent, and ready for analysis 🚀</div>', unsafe_allow_html=True)
 
     # Step 2: Choose options
     st.sidebar.subheader("⚙️ Options")
@@ -155,7 +141,6 @@ if uploaded_file:
 
         # Step 5: Report
         st.subheader("📑 Data Cleaning Report")
-
         col1, col2, col3 = st.columns(3)
         col1.metric("Rows", rows_before, rows_after - rows_before)
         col2.metric("Nulls Fixed", nulls_before, nulls_before - nulls_after)
@@ -177,8 +162,9 @@ if uploaded_file:
         csv = df_cleaned.to_csv(index=False).encode("utf-8")
         st.download_button("📥 Download Cleaned CSV", csv, "cleaned_data.csv", "text/csv")
 
-        # Step 8: Upload new file AFTER cleaning
-        if st.button("🔄 Upload Another File"):
+        # Step 8: Option to upload another file
+        st.info("Want to clean another dataset?")
+        if st.button("🔄 Start Over"):
             st.session_state.clear()
             st.rerun()
 
