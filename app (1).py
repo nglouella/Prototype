@@ -1,8 +1,12 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 import streamlit as st
 import pandas as pd
 import numpy as np
 from datetime import datetime
 import re
+from rapidfuzz import process   # NEW
 
 st.set_page_config(page_title="Raw to Ready ✨", page_icon="🧹", layout="wide")
 
@@ -73,6 +77,24 @@ def fill_missing(df, method="N/A"):
                 df_copy[col].fillna(df_copy[col].mode()[0], inplace=True)
     return df_copy
 
+# NEW: Fuzzy standardization
+def fuzzy_standardize(series, threshold=90):
+    """
+    Standardizes similar values in a column using fuzzy matching.
+    Example: US -> USA, A-5 -> A5
+    """
+    series = series.astype(str).str.strip()
+    unique_vals = series.dropna().unique()
+    mapping = {}
+
+    for val in unique_vals:
+        match, score, _ = process.extractOne(val, mapping.keys())
+        if match and score >= threshold:
+            mapping[val] = mapping[match]   # Map to existing canonical
+        else:
+            mapping[val] = val              # Keep as new canonical
+    return series.map(mapping)
+
 # ---------------------------
 # Reset state when a new file is uploaded
 # ---------------------------
@@ -82,6 +104,7 @@ def reset_cleaning_options():
     st.session_state["do_normalize_text"] = False
     st.session_state["do_fix_dates"] = False
     st.session_state["do_validate_emails"] = False
+    st.session_state["do_fuzzy_standardize"] = False   # NEW
     st.session_state["fill_method"] = "N/A"
     st.session_state["cleaned_ready"] = False
 
@@ -133,20 +156,21 @@ if uploaded_file:
         st.checkbox("Normalize text (names, cities)", key="do_normalize_text")
         st.checkbox("Fix date formats", key="do_fix_dates")
         st.checkbox("Validate emails", key="do_validate_emails")
+        st.checkbox("Fuzzy standardize values", key="do_fuzzy_standardize")  # NEW
 
     # Tabs for Raw vs Cleaned data
     tab1, tab2 = st.tabs(["🧹 Raw Data Preview", "✨ Cleaned Data Preview"])
     with tab1:
         st.dataframe(df.head())
 
-   # Step 3: Run Cleaning
+    # Step 3: Run Cleaning
     if st.sidebar.button("🧹 Step 3: Run Cleaning"):
         df_cleaned = df.copy()
 
         # Progress bar
         progress = st.progress(0)
 
-        # Simulate cleaning steps with progress
+        # Cleaning steps
         progress.progress(10)
         df_cleaned = fill_missing(df_cleaned, method=fill_method)
 
@@ -163,7 +187,7 @@ if uploaded_file:
             for col in df_cleaned.select_dtypes(include=["object"]).columns:
                 df_cleaned[col] = normalize_text(df_cleaned[col])
 
-        progress.progress(85)
+        progress.progress(80)
         if st.session_state["do_fix_dates"]:
             for col in df_cleaned.columns:
                 if "date" in col.lower():
@@ -173,8 +197,12 @@ if uploaded_file:
                 if "email" in col.lower():
                     df_cleaned[col] = validate_emails(df_cleaned[col])
 
-        progress.progress(100)
+        progress.progress(90)
+        if st.session_state["do_fuzzy_standardize"]:
+            for col in df_cleaned.select_dtypes(include=["object"]).columns:
+                df_cleaned[col] = fuzzy_standardize(df_cleaned[col], threshold=90)
 
+        progress.progress(100)
 
         # Save cleaned stats
         rows_after = int(len(df_cleaned))
@@ -202,6 +230,3 @@ if uploaded_file:
 
 else:
     st.info(" Upload a CSV file in the sidebar to get started!")
-
-
-
