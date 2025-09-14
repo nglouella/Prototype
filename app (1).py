@@ -209,7 +209,7 @@ if uploaded_file:
         nulls_after = int(df_cleaned.isnull().sum().sum())
         duplicates_after = int(df_cleaned.duplicated().sum())
 
-                # Report
+        # Report
         st.success("Cleaning completed successfully!")
 
         col1, col2, col3 = st.columns(3)
@@ -253,6 +253,9 @@ if uploaded_file:
                 unsafe_allow_html=True
             )
 
+        # ✅ Show Cleaned Data Preview
+        with tab2:
+            st.dataframe(df_cleaned.head())
 
         # Step 4: Download
         st.subheader("📥 Step 4: Save")
@@ -261,4 +264,3 @@ if uploaded_file:
 
 else:
     st.info(" Upload a CSV file in the sidebar to get started!")
-
