@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import re
-from rapidfuzz import process   # NEW
+import difflib   # ✅ replaced rapidfuzz with built-in difflib
 
 st.set_page_config(page_title="Raw to Ready ✨", page_icon="🧹", layout="wide")
 
@@ -77,22 +77,22 @@ def fill_missing(df, method="N/A"):
                 df_copy[col].fillna(df_copy[col].mode()[0], inplace=True)
     return df_copy
 
-# NEW: Fuzzy standardization
-def fuzzy_standardize(series, threshold=90):
+# ✅ NEW: Fuzzy standardization with difflib
+def fuzzy_standardize(series, cutoff=0.85):
     """
     Standardizes similar values in a column using fuzzy matching.
-    Example: US -> USA, A-5 -> A5
+    Example: Jonh -> John, US -> USA
     """
     series = series.astype(str).str.strip()
     unique_vals = series.dropna().unique()
     mapping = {}
 
     for val in unique_vals:
-        match, score, _ = process.extractOne(val, mapping.keys())
-        if match and score >= threshold:
-            mapping[val] = mapping[match]   # Map to existing canonical
+        match = difflib.get_close_matches(val, mapping.keys(), n=1, cutoff=cutoff)
+        if match:
+            mapping[val] = mapping[match[0]]   # map to existing canonical
         else:
-            mapping[val] = val              # Keep as new canonical
+            mapping[val] = val                 # keep as new canonical
     return series.map(mapping)
 
 # ---------------------------
@@ -200,7 +200,7 @@ if uploaded_file:
         progress.progress(90)
         if st.session_state["do_fuzzy_standardize"]:
             for col in df_cleaned.select_dtypes(include=["object"]).columns:
-                df_cleaned[col] = fuzzy_standardize(df_cleaned[col], threshold=90)
+                df_cleaned[col] = fuzzy_standardize(df_cleaned[col], cutoff=0.85)
 
         progress.progress(100)
 
