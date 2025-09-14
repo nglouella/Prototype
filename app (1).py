@@ -181,7 +181,8 @@ if uploaded_file:
         # Step 4: Download
         st.subheader("📥 Step 4: Save")
         csv = df_cleaned.to_csv(index=False).encode("utf-8")
-        st.download_button("⬇️ Download Cleaned CSV", csv, "cleaned_data.csv", "text/csv")
+        st.download_button("Download Cleaned CSV", csv, "cleaned_data.csv", "text/csv")
 
 else:
     st.info(" Upload a CSV file in the sidebar to get started!")
+
