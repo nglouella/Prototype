@@ -81,12 +81,12 @@ def fill_missing(df, method="N/A"):
 # Hero Section
 # ---------------------------
 st.markdown("<div class='main-title'>🧹 Raw to Ready ✨</div>", unsafe_allow_html=True)
-st.markdown("<div class='subtitle'>Upload your messy CSV, clean it in a few clicks, and download a ready-to-use dataset 🚀</div>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle'>Upload your messy CSV, clean it in a few clicks, and download a ready-to-use dataset </div>", unsafe_allow_html=True)
 
 # ---------------------------
 # Sidebar
 # ---------------------------
-st.sidebar.title("📋 Data Cleaning Wizard")
+st.sidebar.title("Data Cleaning Wizard")
 st.sidebar.markdown("Follow the steps below:")
 
 # Step 1: Upload
@@ -103,7 +103,7 @@ if uploaded_file:
     # Step 2: Options
     st.sidebar.markdown("### ⚙️ Step 2: Choose Cleaning Options")
     fill_method = st.sidebar.selectbox("Missing Values", ["N/A", "Mean", "Median", "Most Frequent"])
-    with st.sidebar.expander("🔧 Advanced Options"):
+    with st.sidebar.expander("Advanced Options"):
         do_duplicates = st.checkbox("Remove duplicates")
         do_standardize_cols = st.checkbox("Standardize column names")
         do_normalize_text = st.checkbox("Normalize text (names, cities)")
@@ -111,7 +111,7 @@ if uploaded_file:
         do_validate_emails = st.checkbox("Validate emails")
 
     # Tabs for Raw vs Cleaned data
-    tab1, tab2 = st.tabs(["📂 Raw Data Preview", "✨ Cleaned Data Preview"])
+    tab1, tab2 = st.tabs(["🧹 Raw Data Preview", "✨ Cleaned Data Preview"])
 
     with tab1:
         st.dataframe(df.head())
@@ -144,7 +144,7 @@ if uploaded_file:
         duplicates_after = int(df_cleaned.duplicated().sum())
 
         # Report
-        st.success("🎉 Cleaning completed successfully!")
+        st.success("Cleaning completed successfully!")
 
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -158,14 +158,12 @@ if uploaded_file:
             st.dataframe(df_cleaned.head())
 
         # Step 4: Download or Restart
-        st.subheader("📥 Step 4: Save or Restart")
+        st.subheader("📥 Step 4: Save")
         csv = df_cleaned.to_csv(index=False).encode("utf-8")
-        colA, colB = st.columns(2)
+        colA = st.columns(2)
         with colA:
             st.download_button("⬇️ Download Cleaned CSV", csv, "cleaned_data.csv", "text/csv")
-        with colB:
-            if st.button("🔄 Upload Another File"):
-                st.experimental_rerun()
 
 else:
-    st.info("👆 Upload a CSV file in the sidebar to get started!")
+    st.info(" Upload a CSV file in the sidebar to get started!")
+
