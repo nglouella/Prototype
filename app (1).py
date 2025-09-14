@@ -179,7 +179,6 @@ if uploaded_file:
                     df_cleaned[col] = validate_emails(df_cleaned[col])
 
         progress.progress(100)
-        status_text.text("✅ Cleaning completed successfully!")
 
         # Save cleaned stats
         rows_after = int(len(df_cleaned))
@@ -207,3 +206,4 @@ if uploaded_file:
 
 else:
     st.info(" Upload a CSV file in the sidebar to get started!")
+
