@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import re
-import difflib   # ✅ replaced rapidfuzz with built-in difflib
+import difflib   # ✅ using built-in difflib instead of rapidfuzz
 
 st.set_page_config(page_title="Raw to Ready ✨", page_icon="🧹", layout="wide")
 
@@ -38,6 +38,9 @@ theme_css = """
         box-shadow: 0px 2px 8px rgba(0,0,0,0.05);
         text-align: center;
     }
+    .delta-positive { color: green; }
+    .delta-negative { color: red; }
+    .delta-neutral { color: black; } /* ✅ force black Δ 0 */
 </style>
 """
 st.markdown(theme_css, unsafe_allow_html=True)
@@ -55,7 +58,10 @@ def standardize_dates(series):
         return x
     return series.apply(parse_date)
 
-def normalize_text(series):
+def normalize_text(series, col_name=""):
+    """Normalize capitalization for names/cities, but skip emails."""
+    if "email" in col_name.lower():
+        return series  # ✅ don’t change emails
     return series.astype(str).str.strip().str.lower().str.title()
 
 def validate_emails(series):
@@ -79,10 +85,6 @@ def fill_missing(df, method="N/A"):
 
 # ✅ NEW: Fuzzy standardization with difflib
 def fuzzy_standardize(series, cutoff=0.85):
-    """
-    Standardizes similar values in a column using fuzzy matching.
-    Example: Jonh -> John, US -> USA
-    """
     series = series.astype(str).str.strip()
     unique_vals = series.dropna().unique()
     mapping = {}
@@ -104,7 +106,7 @@ def reset_cleaning_options():
     st.session_state["do_normalize_text"] = False
     st.session_state["do_fix_dates"] = False
     st.session_state["do_validate_emails"] = False
-    st.session_state["do_fuzzy_standardize"] = False   # NEW
+    st.session_state["do_fuzzy_standardize"] = False
     st.session_state["fill_method"] = "N/A"
     st.session_state["cleaned_ready"] = False
 
@@ -156,7 +158,7 @@ if uploaded_file:
         st.checkbox("Normalize text (names, cities)", key="do_normalize_text")
         st.checkbox("Fix date formats", key="do_fix_dates")
         st.checkbox("Validate emails", key="do_validate_emails")
-        st.checkbox("Fuzzy standardize values", key="do_fuzzy_standardize")  # NEW
+        st.checkbox("Fuzzy standardize values", key="do_fuzzy_standardize")
 
     # Tabs for Raw vs Cleaned data
     tab1, tab2 = st.tabs(["🧹 Raw Data Preview", "✨ Cleaned Data Preview"])
@@ -185,7 +187,7 @@ if uploaded_file:
         progress.progress(70)
         if st.session_state["do_normalize_text"]:
             for col in df_cleaned.select_dtypes(include=["object"]).columns:
-                df_cleaned[col] = normalize_text(df_cleaned[col])
+                df_cleaned[col] = normalize_text(df_cleaned[col], col_name=col)
 
         progress.progress(80)
         if st.session_state["do_fix_dates"]:
@@ -214,46 +216,18 @@ if uploaded_file:
 
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.markdown(
-                f"""
-                <div class='report-card'>
-                    <h3>Rows</h3>
-                    <p>{rows_after}</p>
-                    <div style='font-size:20px; font-weight:bold; color:black;'>
-                        Δ {rows_after - rows_before}
-                    </div>
-                </div>
-                """, 
-                unsafe_allow_html=True
-            )
+            delta = rows_after - rows_before
+            color_class = "delta-neutral" if delta == 0 else ("delta-positive" if delta > 0 else "delta-negative")
+            st.markdown(f"<div class='report-card'><h3>Rows</h3><p>{rows_after}</p><small class='{color_class}'>Δ {delta}</small></div>", unsafe_allow_html=True)
         with col2:
-            st.markdown(
-                f"""
-                <div class='report-card'>
-                    <h3>Nulls</h3>
-                    <p>{nulls_after}</p>
-                    <div style='font-size:22px; font-weight:bold; color:#4CAF50;'>
-                        Fixed {nulls_before - nulls_after}
-                    </div>
-                </div>
-                """, 
-                unsafe_allow_html=True
-            )
+            delta = nulls_before - nulls_after
+            color_class = "delta-neutral" if delta == 0 else "delta-positive"
+            st.markdown(f"<div class='report-card'><h3>Nulls</h3><p>{nulls_after}</p><small class='{color_class}'>Fixed {delta}</small></div>", unsafe_allow_html=True)
         with col3:
-            st.markdown(
-                f"""
-                <div class='report-card'>
-                    <h3>Duplicates</h3>
-                    <p>{duplicates_after}</p>
-                    <div style='font-size:22px; font-weight:bold; color:#E53935;'>
-                        Removed {duplicates_before - duplicates_after}
-                    </div>
-                </div>
-                """, 
-                unsafe_allow_html=True
-            )
+            delta = duplicates_before - duplicates_after
+            color_class = "delta-neutral" if delta == 0 else "delta-positive"
+            st.markdown(f"<div class='report-card'><h3>Duplicates</h3><p>{duplicates_after}</p><small class='{color_class}'>Removed {delta}</small></div>", unsafe_allow_html=True)
 
-        # ✅ Show Cleaned Data Preview
         with tab2:
             st.dataframe(df_cleaned.head())
 
