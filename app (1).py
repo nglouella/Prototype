@@ -7,6 +7,33 @@ import re
 st.set_page_config(page_title="Raw to Ready ✨", page_icon="🧹", layout="wide")
 
 # ---------------------------
+# Custom CSS for style
+# ---------------------------
+st.markdown("""
+    <style>
+        .main-title {
+            text-align: center;
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2E86C1;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 1.2em;
+            color: #555;
+            margin-bottom: 30px;
+        }
+        .report-card {
+            padding: 20px;
+            border-radius: 15px;
+            background-color: #f8f9fa;
+            box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# ---------------------------
 # Helper functions
 # ---------------------------
 def standardize_dates(series):
@@ -40,26 +67,30 @@ def fill_missing(df, method="N/A"):
     return df_copy
 
 # ---------------------------
-# Sidebar (steps)
+# Hero Section
 # ---------------------------
-st.sidebar.title("🧹 Cleaning Pipeline")
+st.markdown("<div class='main-title'>🧹 Raw to Ready ✨</div>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle'>Upload your messy CSV, clean it in a few clicks, and download a ready-to-use dataset 🚀</div>", unsafe_allow_html=True)
+
+# ---------------------------
+# Sidebar
+# ---------------------------
+st.sidebar.title("⚙️ Cleaning Pipeline")
 st.sidebar.markdown("Follow the steps below:")
 
-# Step 1: File upload
-uploaded_file = st.sidebar.file_uploader("📥 Upload CSV", type=["csv"])
+# Step 1: Upload
+uploaded_file = st.sidebar.file_uploader("📥 Step 1: Upload CSV", type=["csv"])
 
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
 
+    # Save original stats
     rows_before = int(len(df))
     nulls_before = int(df.isnull().sum().sum())
     duplicates_before = int(df.duplicated().sum())
 
-    st.title("📊 Raw to Ready Data Cleaner")
-    st.markdown("Make your dataset clean, consistent, and ready for analysis 🚀")
-
-    # Step 2: Choose options
-    st.sidebar.subheader("⚙️ Options")
+    # Step 2: Options
+    st.sidebar.subheader("⚙️ Step 2: Choose Cleaning Options")
     fill_method = st.sidebar.selectbox("Missing Values", ["N/A", "Mean", "Median", "Most Frequent"])
     do_duplicates = st.sidebar.checkbox("Remove duplicates")
     do_standardize_cols = st.sidebar.checkbox("Standardize column names")
@@ -67,72 +98,57 @@ if uploaded_file:
     do_fix_dates = st.sidebar.checkbox("Fix date formats")
     do_validate_emails = st.sidebar.checkbox("Validate emails")
 
-    # Step 3: Preview raw data
-    st.subheader("📂 Raw Data Preview")
-    st.dataframe(df.head())
+    # Tabs for Raw vs Cleaned data
+    tab1, tab2 = st.tabs(["📂 Raw Data Preview", "✨ Cleaned Data Preview"])
 
-    # Step 4: Apply cleaning
-    if st.sidebar.button("🧹 Run Cleaning"):
+    with tab1:
+        st.dataframe(df.head())
+
+    # Step 3: Run Cleaning
+    if st.sidebar.button("🧹 Step 3: Run Cleaning"):
         df_cleaned = df.copy()
 
-        # Handle missing values
+        # Apply cleaning
         df_cleaned = fill_missing(df_cleaned, method=fill_method)
-
-        # Remove duplicates
         if do_duplicates:
             df_cleaned.drop_duplicates(inplace=True)
-
-        # Standardize column names
         if do_standardize_cols:
             df_cleaned.columns = [c.strip().lower().replace(" ", "_") for c in df_cleaned.columns]
-
-        # Normalize text
         if do_normalize_text:
             for col in df_cleaned.select_dtypes(include=["object"]).columns:
                 df_cleaned[col] = normalize_text(df_cleaned[col])
-
-        # Fix dates
         if do_fix_dates:
             for col in df_cleaned.columns:
                 if "date" in col.lower():
                     df_cleaned[col] = standardize_dates(df_cleaned[col])
-
-        # Validate emails
         if do_validate_emails:
             for col in df_cleaned.columns:
                 if "email" in col.lower():
                     df_cleaned[col] = validate_emails(df_cleaned[col])
 
-        # Save cleaned stats (also cast to int)
+        # Save cleaned stats
         rows_after = int(len(df_cleaned))
         nulls_after = int(df_cleaned.isnull().sum().sum())
         duplicates_after = int(df_cleaned.duplicated().sum())
 
+        # Report
         st.success("✅ Cleaning completed!")
 
-        # Step 5: Report
-        st.subheader("📑 Data Cleaning Report")
-
         col1, col2, col3 = st.columns(3)
-        col1.metric("Rows", rows_after, rows_after - rows_before)
-        col2.metric("Nulls", nulls_after, nulls_before - nulls_after)  # fixed direction
-        col3.metric("Duplicates", duplicates_after, duplicates_before - duplicates_after)
+        with col1:
+            st.markdown(f"<div class='report-card'><h3>Rows</h3><p>{rows_after}</p><small>Δ {rows_after - rows_before}</small></div>", unsafe_allow_html=True)
+        with col2:
+            st.markdown(f"<div class='report-card'><h3>Nulls</h3><p>{nulls_after}</p><small>Fixed {nulls_before - nulls_after}</small></div>", unsafe_allow_html=True)
+        with col3:
+            st.markdown(f"<div class='report-card'><h3>Duplicates</h3><p>{duplicates_after}</p><small>Removed {duplicates_before - duplicates_after}</small></div>", unsafe_allow_html=True)
 
-        st.write("### 🔍 Before vs After Summary")
-        report_df = pd.DataFrame({
-            "Metric": ["Rows", "Null values", "Duplicates"],
-            "Before": [rows_before, nulls_before, duplicates_before],
-            "After": [rows_after, nulls_after, duplicates_after],
-        })
-        st.table(report_df)
+        with tab2:
+            st.dataframe(df_cleaned.head())
 
-        # Step 6: Show cleaned data
-        st.subheader("✨ Cleaned Data Preview")
-        st.dataframe(df_cleaned.head())
-
-        # Step 7: Download option
+        # Download button
+        st.subheader("📥 Download")
         csv = df_cleaned.to_csv(index=False).encode("utf-8")
-        st.download_button("📥 Download Cleaned CSV", csv, "cleaned_data.csv", "text/csv")
+        st.download_button("⬇️ Download Cleaned CSV", csv, "cleaned_data.csv", "text/csv")
 
 else:
-    st.info("👆 Upload a CSV file to get started!")
+    st.info("👆 Upload a CSV file in the sidebar to get started!")
