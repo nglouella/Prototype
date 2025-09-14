@@ -6,25 +6,27 @@ import re
 
 st.set_page_config(page_title="Raw to Ready ✨", page_icon="🧹", layout="wide")
 
-# Custom CSS for background + colors
+# Custom CSS for gradient background + colors
 st.markdown("""
     <style>
     .stApp {
-        background-color: #f9f9fc; /* light pastel background */
+        background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
     }
     .main-title {
         color: #2c3e50;
         text-align: center;
         font-size: 36px;
         font-weight: bold;
+        margin-bottom: -10px;
     }
     .sub-title {
         color: #16a085;
         text-align: center;
         font-size: 20px;
+        margin-bottom: 20px;
     }
     .stSidebar {
-        background-color: #ecf0f1;
+        background-color: #f4f6f7;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -139,9 +141,10 @@ if uploaded_file:
         # Step 5: Report
         st.subheader("📑 Data Cleaning Report")
         col1, col2, col3 = st.columns(3)
-        col1.metric("Rows", rows_before, rows_after - rows_before)
-        col2.metric("Nulls Fixed", nulls_before, nulls_before - nulls_after)
-        col3.metric("Duplicates Removed", duplicates_before, duplicates_before - duplicates_after)
+
+        col1.metric("Rows", rows_before, int(rows_after - rows_before))
+        col2.metric("Nulls Fixed", nulls_before, int(nulls_before - nulls_after))
+        col3.metric("Duplicates Removed", duplicates_before, int(duplicates_before - duplicates_after))
 
         st.write("### 🔍 Before vs After Summary")
         report_df = pd.DataFrame({
