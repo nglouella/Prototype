@@ -57,14 +57,13 @@ def normalize_text(series):
 def validate_emails(series):
     return series.apply(lambda x: x if re.match(r"[^@]+@[^@]+\.[^@]+", str(x)) else "invalid@example.com")
 
-def handle_missing(df, method="N/A"):
+def fill_missing(df, method="N/A"):
     df_copy = df.copy()
-    if method == "Drop Rows":
-        df_copy.dropna(inplace=True)
-        return df_copy
     for col in df_copy.columns:
         if df_copy[col].isnull().sum() > 0:
-            if method == "N/A":
+            if method == "Drop Rows":
+                df_copy.dropna(inplace=True)
+            elif method == "N/A":
                 df_copy[col].fillna("N/A", inplace=True)
             elif method == "Mean" and pd.api.types.is_numeric_dtype(df_copy[col]):
                 df_copy[col].fillna(df_copy[col].mean(), inplace=True)
@@ -140,7 +139,7 @@ if uploaded_file:
     with tab1:
         st.dataframe(df.head())
 
-       # Step 3: Run Cleaning
+    # Step 3: Run Cleaning
     if st.sidebar.button("🧹 Step 3: Run Cleaning"):
         df_cleaned = df.copy()
 
@@ -148,7 +147,6 @@ if uploaded_file:
         progress = st.progress(0)
         status_text = st.empty()
 
-        # Apply cleaning
         progress.progress(10)
         status_text.text("Filling missing values...")
         df_cleaned = fill_missing(df_cleaned, method=fill_method)
@@ -170,7 +168,7 @@ if uploaded_file:
                 df_cleaned[col] = normalize_text(df_cleaned[col])
 
         progress.progress(85)
-        status_text.text("Fixing date formats & validating emails...")
+        status_text.text("Fixing dates & validating emails...")
         if st.session_state["do_fix_dates"]:
             for col in df_cleaned.columns:
                 if "date" in col.lower():
@@ -206,7 +204,6 @@ if uploaded_file:
         st.subheader("📥 Step 4: Save")
         csv = df_cleaned.to_csv(index=False).encode("utf-8")
         st.download_button("Download Cleaned CSV", csv, "cleaned_data.csv", "text/csv")
-
 
 else:
     st.info(" Upload a CSV file in the sidebar to get started!")
