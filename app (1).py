@@ -211,25 +211,55 @@ if uploaded_file:
         nulls_after = int(df_cleaned.isnull().sum().sum())
         duplicates_after = int(df_cleaned.duplicated().sum())
 
-        # Report
+               # Report
         st.success("Cleaning completed successfully!")
 
         col1, col2, col3 = st.columns(3)
         with col1:
             delta = rows_after - rows_before
-            color_class = "delta-neutral" if delta == 0 else ("delta-positive" if delta > 0 else "delta-negative")
-            st.markdown(f"<div class='report-card'><h3>Rows</h3><p>{rows_after}</p><small class='{color_class}'>Δ {delta}</small></div>", unsafe_allow_html=True)
+            color = "black" if delta == 0 else ("green" if delta > 0 else "red")
+            st.markdown(
+                f"""
+                <div class='report-card'>
+                    <h3>Rows</h3>
+                    <p>{rows_after}</p>
+                    <div style='font-size:22px; font-weight:bold; color:{color};'>
+                        Δ {delta}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
         with col2:
             delta = nulls_before - nulls_after
-            color_class = "delta-neutral" if delta == 0 else "delta-positive"
-            st.markdown(f"<div class='report-card'><h3>Nulls</h3><p>{nulls_after}</p><small class='{color_class}'>Fixed {delta}</small></div>", unsafe_allow_html=True)
+            color = "black" if delta == 0 else "green"
+            st.markdown(
+                f"""
+                <div class='report-card'>
+                    <h3>Nulls</h3>
+                    <p>{nulls_after}</p>
+                    <div style='font-size:22px; font-weight:bold; color:{color};'>
+                        Fixed {delta}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
         with col3:
             delta = duplicates_before - duplicates_after
-            color_class = "delta-neutral" if delta == 0 else "delta-positive"
-            st.markdown(f"<div class='report-card'><h3>Duplicates</h3><p>{duplicates_after}</p><small class='{color_class}'>Removed {delta}</small></div>", unsafe_allow_html=True)
-
-        with tab2:
-            st.dataframe(df_cleaned.head())
+            color = "black" if delta == 0 else "green"
+            st.markdown(
+                f"""
+                <div class='report-card'>
+                    <h3>Duplicates</h3>
+                    <p>{duplicates_after}</p>
+                    <div style='font-size:22px; font-weight:bold; color:{color};'>
+                        Removed {delta}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
         # Step 4: Download
         st.subheader("📥 Step 4: Save")
@@ -238,3 +268,4 @@ if uploaded_file:
 
 else:
     st.info(" Upload a CSV file in the sidebar to get started!")
+
