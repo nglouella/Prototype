@@ -209,19 +209,50 @@ if uploaded_file:
         nulls_after = int(df_cleaned.isnull().sum().sum())
         duplicates_after = int(df_cleaned.duplicated().sum())
 
-        # Report
+                # Report
         st.success("Cleaning completed successfully!")
 
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.markdown(f"<div class='report-card'><h3>Rows</h3><p>{rows_after}</p><small>Δ {rows_after - rows_before}</small></div>", unsafe_allow_html=True)
+            st.markdown(
+                f"""
+                <div class='report-card'>
+                    <h3>Rows</h3>
+                    <p>{rows_after}</p>
+                    <div style='font-size:20px; font-weight:bold; color:black;'>
+                        Δ {rows_after - rows_before}
+                    </div>
+                </div>
+                """, 
+                unsafe_allow_html=True
+            )
         with col2:
-            st.markdown(f"<div class='report-card'><h3>Nulls</h3><p>{nulls_after}</p><small>Fixed {nulls_before - nulls_after}</small></div>", unsafe_allow_html=True)
+            st.markdown(
+                f"""
+                <div class='report-card'>
+                    <h3>Nulls</h3>
+                    <p>{nulls_after}</p>
+                    <div style='font-size:22px; font-weight:bold; color:#4CAF50;'>
+                        Fixed {nulls_before - nulls_after}
+                    </div>
+                </div>
+                """, 
+                unsafe_allow_html=True
+            )
         with col3:
-            st.markdown(f"<div class='report-card'><h3>Duplicates</h3><p>{duplicates_after}</p><small>Removed {duplicates_before - duplicates_after}</small></div>", unsafe_allow_html=True)
+            st.markdown(
+                f"""
+                <div class='report-card'>
+                    <h3>Duplicates</h3>
+                    <p>{duplicates_after}</p>
+                    <div style='font-size:22px; font-weight:bold; color:#E53935;'>
+                        Removed {duplicates_before - duplicates_after}
+                    </div>
+                </div>
+                """, 
+                unsafe_allow_html=True
+            )
 
-        with tab2:
-            st.dataframe(df_cleaned.head())
 
         # Step 4: Download
         st.subheader("📥 Step 4: Save")
@@ -230,3 +261,4 @@ if uploaded_file:
 
 else:
     st.info(" Upload a CSV file in the sidebar to get started!")
+
