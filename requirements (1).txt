@@ -2,4 +2,6 @@ python_version >= "3.9"
 streamlit
 pandas
 openpyxl
-rapidfuzz
+rapidfuzz==3.9.6
+
+
