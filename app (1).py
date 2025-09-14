@@ -57,8 +57,11 @@ def normalize_text(series):
 def validate_emails(series):
     return series.apply(lambda x: x if re.match(r"[^@]+@[^@]+\.[^@]+", str(x)) else "invalid@example.com")
 
-def fill_missing(df, method="N/A"):
+def handle_missing(df, method="N/A"):
     df_copy = df.copy()
+    if method == "Drop Rows":
+        df_copy.dropna(inplace=True)
+        return df_copy
     for col in df_copy.columns:
         if df_copy[col].isnull().sum() > 0:
             if method == "N/A":
@@ -121,7 +124,7 @@ if uploaded_file:
     st.sidebar.markdown("### ⚙️ Step 2: Choose Cleaning Options")
     fill_method = st.sidebar.selectbox(
         "Missing Values",
-        ["N/A", "Mean", "Median", "Most Frequent"],
+        ["N/A", "Mean", "Median", "Most Frequent", "Drop Rows"],
         key="fill_method"
     )
 
@@ -142,7 +145,7 @@ if uploaded_file:
         df_cleaned = df.copy()
 
         # Apply cleaning
-        df_cleaned = fill_missing(df_cleaned, method=fill_method)
+        df_cleaned = handle_missing(df_cleaned, method=fill_method)
         if st.session_state["do_duplicates"]:
             df_cleaned.drop_duplicates(inplace=True)
         if st.session_state["do_standardize_cols"]:
@@ -185,4 +188,3 @@ if uploaded_file:
 
 else:
     st.info(" Upload a CSV file in the sidebar to get started!")
-
