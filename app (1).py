@@ -82,15 +82,6 @@ def fill_missing(df, method="N/A"):
     return df_copy
 
 # ---------------------------
-# Session state reset
-# ---------------------------
-if "reset" not in st.session_state:
-    st.session_state.reset = False
-
-if "uploaded_file" not in st.session_state:
-    st.session_state.uploaded_file = None
-
-# ---------------------------
 # Sidebar
 # ---------------------------
 st.sidebar.title("🧹 Cleaning Pipeline")
@@ -98,11 +89,6 @@ st.sidebar.markdown("Follow the steps below:")
 
 # Step 1: File upload
 uploaded_file = st.sidebar.file_uploader("📥 Upload CSV", type=["csv"], key="file_uploader")
-
-# Reset button
-if st.sidebar.button("🔄 Upload New File"):
-    st.session_state.clear()  # Clears all session states (resets checkboxes/selections)
-    st.rerun()
 
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
@@ -190,6 +176,11 @@ if uploaded_file:
         # Step 7: Download option
         csv = df_cleaned.to_csv(index=False).encode("utf-8")
         st.download_button("📥 Download Cleaned CSV", csv, "cleaned_data.csv", "text/csv")
+
+        # Step 8: Upload new file AFTER cleaning
+        if st.button("🔄 Upload Another File"):
+            st.session_state.clear()
+            st.rerun()
 
 else:
     st.info("👆 Upload a CSV file to get started!")
