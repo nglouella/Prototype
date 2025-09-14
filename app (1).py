@@ -4,9 +4,6 @@ import numpy as np
 from datetime import datetime
 import re
 
-# ---------------------------
-# Page config + CSS styling
-# ---------------------------
 st.set_page_config(page_title="Raw to Ready ✨", page_icon="🧹", layout="wide")
 
 # Custom CSS for background + colors
@@ -28,10 +25,6 @@ st.markdown("""
     }
     .stSidebar {
         background-color: #ecf0f1;
-    }
-    .report-metric {
-        font-weight: bold;
-        color: #2980b9;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -76,11 +69,6 @@ def fill_missing(df, method="N/A"):
 # ---------------------------
 st.sidebar.title("🧹 Cleaning Pipeline")
 st.sidebar.markdown("Follow the steps below:")
-
-# Reset option
-if st.sidebar.button("🔄 Start Over"):
-    st.session_state.clear()
-    st.rerun()
 
 # Step 1: File upload
 uploaded_file = st.sidebar.file_uploader("📥 Upload CSV", type=["csv"], key="file_uploader")
@@ -173,7 +161,7 @@ if uploaded_file:
 
         # Step 8: Option to upload another file
         st.info("Want to clean another dataset?")
-        if st.button("📂 Upload New File"):
+        if st.button("🔄 Start Over"):
             st.session_state.clear()
             st.rerun()
 
