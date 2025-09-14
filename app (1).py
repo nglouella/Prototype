@@ -223,7 +223,7 @@ if uploaded_file:
                 <div class='report-card'>
                     <h3>Rows</h3>
                     <p style='font-size:26px; font-weight:bold;'>{rows_after}</p>
-                    <div style='font-size:26px; font-weight:bold; color:{color};'>
+                    <div style='font-size:28px; font-weight:bold; color:{color};'>
                         Δ {delta}
                     </div>
                 </div>
@@ -238,7 +238,7 @@ if uploaded_file:
                 <div class='report-card'>
                     <h3>Nulls</h3>
                     <p style='font-size:26px; font-weight:bold;'>{nulls_after}</p>
-                    <div style='font-size:26px; font-weight:bold; color:{color};'>
+                    <div style='font-size:28px; font-weight:bold; color:{color};'>
                         Fixed {delta}
                     </div>
                 </div>
@@ -253,7 +253,7 @@ if uploaded_file:
                 <div class='report-card'>
                     <h3>Duplicates</h3>
                     <p style='font-size:26px; font-weight:bold;'>{duplicates_after}</p>
-                    <div style='font-size:26px; font-weight:bold; color:{color};'>
+                    <div style='font-size:28px; font-weight:bold; color:{color};'>
                         Removed {delta}
                     </div>
                 </div>
@@ -269,6 +269,7 @@ if uploaded_file:
 
 else:
     st.info(" Upload a CSV file in the sidebar to get started!")
+
 
 
 
