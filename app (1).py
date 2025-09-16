@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import re
-import difflib   # ✅ using built-in difflib instead of rapidfuzz
+import difflib 
 
 st.set_page_config(page_title="Raw to Ready ✨", page_icon="🧹", layout="wide")
 
@@ -61,7 +61,7 @@ def standardize_dates(series):
 def normalize_text(series, col_name=""):
     """Normalize capitalization for names/cities, but skip emails."""
     if "email" in col_name.lower():
-        return series  # ✅ don’t change emails
+        return series  
     return series.astype(str).str.strip().str.lower().str.title()
 
 def validate_emails(series):
@@ -83,7 +83,6 @@ def fill_missing(df, method="N/A"):
                 df_copy[col].fillna(df_copy[col].mode()[0], inplace=True)
     return df_copy
 
-# ✅ NEW: Fuzzy standardization with difflib
 def fuzzy_standardize(series, cutoff=0.85):
     series = series.astype(str).str.strip()
     unique_vals = series.dropna().unique()
@@ -92,9 +91,9 @@ def fuzzy_standardize(series, cutoff=0.85):
     for val in unique_vals:
         match = difflib.get_close_matches(val, mapping.keys(), n=1, cutoff=cutoff)
         if match:
-            mapping[val] = mapping[match[0]]   # map to existing canonical
+            mapping[val] = mapping[match[0]]   
         else:
-            mapping[val] = val                 # keep as new canonical
+            mapping[val] = val                
     return series.map(mapping)
 
 # ---------------------------
@@ -206,6 +205,10 @@ if uploaded_file:
 
         progress.progress(100)
 
+        with tab2:
+            st.dataframe(df_cleaned.head())
+
+
         # Save cleaned stats
         rows_after = int(len(df_cleaned))
         nulls_after = int(df_cleaned.isnull().sum().sum())
@@ -269,6 +272,7 @@ if uploaded_file:
 
 else:
     st.info(" Upload a CSV file in the sidebar to get started!")
+
 
 
 
